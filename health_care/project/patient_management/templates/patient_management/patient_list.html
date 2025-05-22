@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Danh sách bệnh nhân</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 20px auto; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        a { text-decoration: none; color: #007bff; }
+        a:hover { text-decoration: underline; }
+        .button { padding: 8px 16px; background-color: #007bff; color: white; border: none; }
+        .button.delete { background-color: #dc3545; }
+    </style>
+</head>
+<body>
+    <h1>Danh sách bệnh nhân</h1>
+    <a href="{% url 'patient_create' %}" class="button">Thêm bệnh nhân</a>
+    <table>
+        <tr>
+            <th>Tên</th>
+            <th>Tuổi</th>
+            <th>Giới tính</th>
+            <th>Trạng thái</th>
+            <th>Địa chỉ</th>
+            <th>Số điện thoại</th>
+            <th>Lịch sử dự đoán</th>
+            <th>Thao tác</th>
+        </tr>
+        {% for patient in patients %}
+        <tr>
+            <td>{{ patient.name }}</td>
+            <td>{{ patient.age }}</td>
+            <td>{{ patient.get_gender_display }}</td>
+            <td>{{ patient.get_status_display }}</td>
+            <td>{{ patient.address }}</td>
+            <td>{{ patient.phone }}</td>
+            <td>{{ patient.prediction_history|default:"Chưa có" }}</td>
+            <td>
+                <a href="{% url 'patient_update' patient.pk %}">Sửa</a> |
+                <a href="{% url 'patient_delete' patient.pk %}" class="delete">Xóa</a>
+            </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="8">Chưa có bệnh nhân nào.</td></tr>
+        {% endfor %}
+    </table>
+    <a href="{% url 'predict_disease' %}">Quay lại Chatbot</a> |
+    <a href="{% url 'doctor_list' %}">Quản lý bác sĩ</a>
+</body>
+</html>

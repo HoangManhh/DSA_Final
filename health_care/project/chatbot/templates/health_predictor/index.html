@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dự đoán bệnh - Chatbot</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #f4f4f9;
+        }
+        .chat-container {
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            padding: 20px;
+            background-color: white;
+            height: 400px;
+            overflow-y: auto;
+            margin-bottom: 20px;
+        }
+        .message {
+            margin: 10px;
+            padding: 10px;
+            border-radius: 5px;
+            max-width: 80%;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .bot-message {
+            background-color: #e6f3ff;
+            margin-left: 20%;
+        }
+        .user-message {
+            background-color: #d1e7dd;
+            margin-right: 20%;
+            text-align: right;
+        }
+        .error-message {
+            background-color: #f8d7da;
+            color: #721c24;
+            margin-left: 20%;
+        }
+        .advice-message {
+            background-color: #fff3cd;
+            margin-left: 20%;
+        }
+        .buttons {
+            text-align: center;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            background-color: #007bff;
+            color: white;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        #reset-button {
+            background-color: #dc3545;
+        }
+        #reset-button:hover {
+            background-color: #c82333;
+        }
+        .speak-button {
+            padding: 5px 10px;
+            font-size: 12px;
+            background-color: #28a745;
+        }
+        .speak-button:hover {
+            background-color: #218838;
+        }
+        .patient-input {
+            margin-bottom: 20px;
+        }
+        .patient-input input {
+            padding: 8px;
+            width: 100%;
+            max-width: 300px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Dự đoán bệnh - Chatbot</h1>
+    <div class="patient-input">
+        <label for="patient_name">Tên bệnh nhân (tùy chọn):</label>
+        <input type="text" id="patient_name" value="{{ patient_name|default:'' }}" placeholder="Nhập tên bệnh nhân">
+    </div>
+    <div class="chat-container" id="chat-container">
+        <div class="message bot-message">Chào bạn! Tôi sẽ hỏi về các triệu chứng. Bạn có bị đau đầu không? (headache)</div>
+    </div>
+    <div class="buttons">
+        <button id="yes-button" onclick="answer('yes')">Yes</button>
+        <button id="no-button" onclick="answer('no')">No</button>
+        <button id="reset-button" onclick="resetChat()">Reset</button>
+    </div>
+    <a href="{% url 'patient_list' %}">Quản lý bệnh nhân</a> |
+    <a href="{% url 'doctor_list' %}">Quản lý bác sĩ</a>
+
+    <script>
+        const symptoms = {{ symptoms|safe }};
+        const advice = {
+            'covid-19': [
+                'Tự cách ly và liên hệ với cơ sở y tế ngay lập tức để được xét nghiệm.',
+                'Đeo khẩu trang và giữ khoảng cách với người khác để tránh lây nhiễm.',
+                'Theo dõi các triệu chứng như sốt, khó thở và nghỉ ngơi đầy đủ.'
+            ],
+            'flu': [
+                'Nghỉ ngơi nhiều và uống đủ nước để hỗ trợ phục hồi.',
+                'Sử dụng thuốc giảm sốt hoặc thuốc cảm theo chỉ định của bác sĩ.',
+                'Tránh tiếp xúc gần với người khác để ngăn virus lây lan.'
+            ],
+            'cold': [
+                'Uống nhiều nước ấm và bổ sung vitamin C để tăng cường sức đề kháng.',
+                'Sử dụng thuốc xịt mũi hoặc thuốc nhỏ mũi để giảm nghẹt mũi.',
+                'Giữ ấm cơ thể và tránh nơi đông người khi đang có triệu chứng.'
+            ],
+            'stomach_ache': [
+                'Tránh ăn thực phẩm cay, dầu mỡ và uống đủ nước để tránh mất nước.',
+                'Nghỉ ngơi và sử dụng thuốc giảm đau bụng theo chỉ định bác sĩ.',
+                'Nếu triệu chứng kéo dài, hãy đến bác sĩ để kiểm tra nguyên nhân.'
+            ],
+            'healthy': [
+                'Duy trì chế độ ăn uống lành mạnh và tập thể dục thường xuyên.',
+                'Ngủ đủ giấc để tăng cường hệ miễn dịch.',
+                'Rửa tay thường xuyên và giữ vệ sinh cá nhân tốt.'
+            ]
+        };
+        let currentSymptomIndex = 0;
+        let answers = {};
+
+        function speakText(text) {
+            if ('speechSynthesis' in window) {
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = 'vi-VN';
+                utterance.rate = 1;
+                utterance.volume = 1;
+                window.speechSynthesis.speak(utterance);
+            } else {
+                addMessage('Trình duyệt của bạn không hỗ trợ text-to-speech.', 'error-message');
+            }
+        }
+
+        function addMessage(content, type, speak = false) {
+            const chatContainer = document.getElementById('chat-container');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${type}`;
+            
+            const textSpan = document.createElement('span');
+            textSpan.textContent = content;
+            messageDiv.appendChild(textSpan);
+
+            if (type === 'advice-message') {
+                const speakButton = document.createElement('button');
+                speakButton.className = 'speak-button';
+                speakButton.textContent = 'Phát âm';
+                speakButton.onclick = () => speakText(content);
+                messageDiv.appendChild(speakButton);
+            }
+
+            chatContainer.appendChild(messageDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+
+            if (speak && type === 'advice-message') {
+                speakText(content);
+            }
+        }
+
+        function answer(response) {
+            const currentSymptom = symptoms[currentSymptomIndex];
+            answers[currentSymptom] = response;
+            addMessage(response.toUpperCase(), 'user-message');
+
+            currentSymptomIndex++;
+            if (currentSymptomIndex < symptoms.length) {
+                const nextSymptom = symptoms[currentSymptomIndex];
+                addMessage(`Bạn có bị ${nextSymptom.replace('_', ' ')} không? (${nextSymptom})`, 'bot-message');
+            } else {
+                document.getElementById('yes-button').disabled = true;
+                document.getElementById('no-button').disabled = true;
+                const patientName = document.getElementById('patient_name').value || 'Anonymous';
+                fetch('http://localhost:3636/predict', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(answers)
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.disease) {
+                        addMessage(`Kết quả dự đoán: Bạn có thể bị ${data.disease}`, 'bot-message');
+                        const adviceList = advice[data.disease] || ['Không có lời khuyên cụ thể.'];
+                        adviceList.forEach((tip, index) => {
+                            addMessage(`${index + 1}. ${tip}`, 'advice-message', true);
+                        });
+                        // Gửi dữ liệu bệnh nhân và dự đoán đến server Django
+                        fetch('', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRFToken': '{{ csrf_token }}'
+                            },
+                            body: JSON.stringify({
+                                patient_name: patientName,
+                                ...answers
+                            })
+                        })
+                        .then(response => response.json())
+                        .catch(error => {
+                            addMessage(`Lỗi khi lưu dữ liệu bệnh nhân: ${error}`, 'error-message');
+                        });
+                    } else {
+                        addMessage(`Lỗi: ${data.error}`, 'error-message');
+                    }
+                })
+                .catch(error => {
+                    addMessage(`Lỗi khi gọi API: ${error}`, 'error-message');
+                });
+            }
+        }
+
+        function resetChat() {
+            const chatContainer = document.getElementById('chat-container');
+            chatContainer.innerHTML = '<div class="message bot-message">Chào bạn! Tôi sẽ hỏi về các triệu chứng. Bạn có bị đau đầu không? (headache)</div>';
+            currentSymptomIndex = 0;
+            answers = {};
+            document.getElementById('yes-button').disabled = false;
+            document.getElementById('no-button').disabled = false;
+            window.speechSynthesis.cancel();
+        }
+    </script>
+</body>
+</html>

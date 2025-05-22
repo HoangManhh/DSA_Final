@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Xóa bác sĩ</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 600px; margin: 20px auto; }
+        .button { padding: 8px 16px; background-color: #dc3545; color: white; border: none; }
+    </style>
+</head>
+<body>
+    <h1>Xóa bác sĩ</h1>
+    <p>Bạn có chắc muốn xóa bác sĩ <strong>{{ doctor.name }}</strong>?</p>
+    <form method="post">
+        {% csrf_token %}
+        <button type="submit" class="button">Xóa</button>
+        <a href="{% url 'doctor_list' %}">Hủy</a>
+    </form>
+</body>
+</html>

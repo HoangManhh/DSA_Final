@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Danh sách bác sĩ</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 20px auto; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        a { text-decoration: none; color: #007bff; }
+        a:hover { text-decoration: underline; }
+        .button { padding: 8px 16px; background-color: #007bff; color: white; border: none; }
+        .button.delete { background-color: #dc3545; }
+    </style>
+</head>
+<body>
+    <h1>Danh sách bác sĩ</h1>
+    <a href="{% url 'doctor_create' %}" class="button">Thêm bác sĩ</a>
+    <table>
+        <tr>
+            <th>Tên</th>
+            <th>Chức danh</th>
+            <th>Chuyên khoa</th>
+            <th>Số điện thoại</th>
+            <th>Email</th>
+            <th>Thao tác</th>
+        </tr>
+        {% for doctor in doctors %}
+        <tr>
+            <td>{{ doctor.name }}</td>
+            <td>{{ doctor.get_title_display }}</td>
+            <td>{{ doctor.specialty }}</td>
+            <td>{{ doctor.phone }}</td>
+            <td>{{ doctor.email }}</td>
+            <td>
+                <a href="{% url 'doctor_update' doctor.pk %}">Sửa</a> |
+                <a href="{% url 'doctor_delete' doctor.pk %}" class="delete">Xóa</a>
+            </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="6">Chưa có bác sĩ nào.</td></tr>
+        {% endfor %}
+    </table>
+    <a href="{% url 'predict_disease' %}">Quay lại Chatbot</a> |
+    <a href="{% url 'patient_list' %}">Quản lý bệnh nhân</a>
+</body>
+</html>

@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Xóa bệnh nhân</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 600px; margin: 20px auto; }
+        .button { padding: 8px 16px; background-color: #dc3545; color: white; border: none; }
+    </style>
+</head>
+<body>
+    <h1>Xóa bệnh nhân</h1>
+    <p>Bạn có chắc muốn xóa bệnh nhân <strong>{{ patient.name }}</strong>?</p>
+    <form method="post">
+        {% csrf_token %}
+        <button type="submit" class="button">Xóa</button>
+        <a href="{% url 'patient_list' %}">Hủy</a>
+    </form>
+</body>
+</html>

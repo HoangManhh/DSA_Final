@@ -1,0 +1,23 @@
+<!doctype html>
+<html>
+<head>
+    <title>Symptom Disease Predictor</title>
+</head>
+<body>
+    <h2>Dự đoán bệnh từ triệu chứng</h2>
+    <form method="post">
+        {% for symptom in symptoms %}
+            <label>{{ symptom.replace('_', ' ').title() }}:</label>
+            <select name="{{ symptom }}">
+                <option value="no">No</option>
+                <option value="yes">Yes</option>
+            </select><br><br>
+        {% endfor %}
+        <input type="submit" value="Dự đoán">
+    </form>
+
+    {% if prediction %}
+        <h3>Kết quả dự đoán cho bạn: <span style="color:red">{{ prediction }}</span></h3>
+    {% endif %}
+</body>
+</html>
